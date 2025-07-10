@@ -33,7 +33,7 @@ jobs:
       uses: SonarSource/sonarqube-scan-action@v5.0.0
       with:
         args: >
-          -Dsonar.projectKey=autoware-platform-ci-cd
+          -Dsonar.projectKey=krishnasai-devops_autoware-platform-ci-cd
           -Dsonar.organization=krishnasai-devops
           -Dsonar.sources=.
       env:
