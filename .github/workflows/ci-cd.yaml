@@ -42,7 +42,7 @@ jobs:
 
     - name: Set up python & Conan
       run: |
-        python3 -m pip intall --upgrade pip
+        python3 -m pip install --upgrade pip
         pip install conan
 
     - name: Build C++ with build-wrapper
