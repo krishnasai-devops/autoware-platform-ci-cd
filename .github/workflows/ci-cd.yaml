@@ -29,16 +29,17 @@ jobs:
     - name: Install Conan
       run: |
         pip install conan
+        conan profile detect --force
 
     - name: Prepare C++ Build
       run: |
         cd cpp_cruise_control
         mkdir -p build
+        conan install . --output-folder=build --build=missing
         cd build
-        conan install .. --build=missing
-        cmake ..
-        make
-
+        cmake .. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake
+        cmake --build .
+        ctest --output-on-failure
 
     - name: Run Unit Tests
       run: |
@@ -51,7 +52,7 @@ jobs:
 
     - name: Set up python & Conan
       run: |
-        python03 -m pip intall --upgrade pip
+        python3 -m pip install --upgrade pip
         pip install conan
 
     - name: Build C++ with build-wrapper
