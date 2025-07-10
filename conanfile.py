@@ -8,4 +8,5 @@ class AutowarePlatform(ConanFile):
         "gtest/1.14.0",
         "boost/1.83.0"
     )
-    generators = "CMakeDeps", "CMakeToolchain"
+    #generators = "CMakeDeps", "CMakeToolchain"
+    generators = "CMakeToolchain", "CMakeDeps"
