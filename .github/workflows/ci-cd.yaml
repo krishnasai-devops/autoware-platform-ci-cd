@@ -36,8 +36,8 @@ jobs:
           -Dsonar.projectKey=autoware-platform-ci-cd
           -Dsonar.organization=krishnasai-devops
           -Dsonar.sources=.
-     env:
-       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} 
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} 
 
     - name: Snyk Open Source Scan
       uses: snyk/actions/node@master
