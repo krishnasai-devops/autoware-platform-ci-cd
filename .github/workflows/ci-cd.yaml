@@ -1,0 +1,65 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - develop      # Dev environment
+      - qa-release   # QA environment
+      - main         # Production
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'prod' || (github.ref_name == 'qa-release' && 'qa' || 'dev') }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install Python dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Run Unit Tests
+      run: |
+        python -m unittest discover -s tests
+
+    - name: SonarCloud Scan
+      uses: sonarsource/sonarcloud-github-action@master
+      with:
+        projectBaseDir: .
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    - name: Snyk Open Source Scan
+      uses: snyk/actions/node@master
+      with:
+        args: test
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+    - name: Conan Login to Artifactory
+      run: |
+        conan remote add artifactory ${{ secrets.CONAN_REPO_URL }} --force
+        conan user -p ${{ secrets.ARTIFACTORY_CONAN_PASS }} -r artifactory ${{ secrets.ARTIFACTORY_CONAN_USER }}
+
+    - name: Docker Build & Push to Artifactory
+      run: |
+        docker login ${{ secrets.DOCKER_REPO_URL }} -u ${{ secrets.ARTIFACTORY_DOCKER_USER }} -p ${{ secrets.ARTIFACTORY_DOCKER_PASS }}
+        docker build -t cpp-service .
+        docker tag cpp-service ${{ secrets.DOCKER_REPO_URL }}/cpp-service:1.0
+        docker push ${{ secrets.DOCKER_REPO_URL }}/cpp-service:1.0
+
+    - name: JIRA Transition Update
+      run: |
+        curl -u ${{ secrets.JIRA_USER }}:${{ secrets.JIRA_TOKEN }} \
+             -X POST \
+             -H "Content-Type: application/json" \
+             --data '{"transition":{"id":"31"}}' \
+             ${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/PROJ-123/transitions
+
