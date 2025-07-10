@@ -25,6 +25,12 @@ jobs:
       run: |
         pip install -r requirements.txt
 
+
+    - name: Install Conan
+      run: |
+        pip install conan
+
+
     - name: Run Unit Tests
       run: |
         python -m unittest discover -s tests
@@ -33,6 +39,11 @@ jobs:
       run: |
         wget https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
         unzip build-wrapper-linux-x86.zip
+
+    - name: Set up python & Conan
+      run: |
+        python03 -m pip intall --upgrade pip
+        pip install conan
 
     - name: Build C++ with build-wrapper
       run: |
