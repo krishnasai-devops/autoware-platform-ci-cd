@@ -1,0 +1,10 @@
+version: '3'
+services:
+  cpp:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.cpp
+  rust:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.rust

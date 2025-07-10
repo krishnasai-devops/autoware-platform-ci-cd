@@ -1,0 +1,5 @@
+FROM rust:1.72
+
+COPY ./rust_telemetry /app
+WORKDIR /app
+RUN cargo build --release
