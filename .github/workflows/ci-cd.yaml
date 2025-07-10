@@ -29,6 +29,7 @@ jobs:
     - name: Install Conan
       run: |
         pip install conan
+        conan profile detect --force
 
     - name: Prepare C++ Build
       run: |
