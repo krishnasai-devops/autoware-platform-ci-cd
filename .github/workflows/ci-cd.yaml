@@ -29,6 +29,19 @@ jobs:
       run: |
         python -m unittest discover -s tests
 
+    - name: Download SonarCloud Build Wrapper
+      run: |
+        wget https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
+        unzip build-wrapper-linux-x86.zip
+
+    - name: Build C++ with build-wrapper
+      run: |
+        mkdir build && cd build
+        conan install ..
+        cmake ..
+        ../build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw-output make
+
+
     - name: SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@v5.0.0
       with:
@@ -36,6 +49,8 @@ jobs:
           -Dsonar.projectKey=krishnasai-devops_autoware-platform-ci-cd
           -Dsonar.organization=krishnasai-devops
           -Dsonar.sources=.
+          -Dsonar.cfamily.build-wrapper-output=bw-output
+          -Dsonar.branch.name=${{ github.ref_name }}
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} 
 
