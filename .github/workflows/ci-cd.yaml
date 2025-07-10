@@ -30,6 +30,15 @@ jobs:
       run: |
         pip install conan
 
+    - name: Prepare C++ Build
+      run: |
+        cd cpp_cruise_control
+        mkdir -p build
+        cd build
+        conan install .. --build=missing
+        cmake ..
+        make
+
 
     - name: Run Unit Tests
       run: |
