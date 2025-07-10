@@ -35,10 +35,11 @@ jobs:
       run: |
         cd cpp_cruise_control
         mkdir -p build
+        conan install . --output-folder=build --build=missing
         cd build
-        conan install .. --build=missing
-        cmake ..
-        make
+        cmake .. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake
+        cmake --build .
+
 
     - name: Run Unit Tests
       run: |
