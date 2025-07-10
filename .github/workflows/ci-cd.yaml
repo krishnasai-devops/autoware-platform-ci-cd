@@ -21,47 +21,37 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install Python dependencies
-      run: |
-        pip install -r requirements.txt
-
-
     - name: Install Conan
       run: |
+        python3 -m pip install --upgrade pip
         pip install conan
         conan profile detect --force
 
-    - name: Prepare C++ Build
+    - name: Set up C++ Build
       run: |
         cd cpp_cruise_control
-        mkdir -p build
-        conan install . --output-folder=build --build=missing
-        cd build
-        cmake .. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
-        cmake --build .
-        ctest --output-on-failure
+        mkdir -p build && cd build
+        conan install .. --build=missing
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        make
 
-    - name: Run Unit Tests
+    - name: Run Unit Tests (GTest)
       run: |
-        python -m unittest discover -s tests
+        cd cpp_cruise_control/build
+        ctest --output-on-failure
 
     - name: Download SonarCloud Build Wrapper
       run: |
         wget https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
         unzip build-wrapper-linux-x86.zip
 
-    - name: Set up python & Conan
+    - name: Rebuild with Build Wrapper
       run: |
-        python3 -m pip install --upgrade pip
-        pip install conan
-
-    - name: Build C++ with build-wrapper
-      run: |
-        mkdir build && cd build
-        conan install ..
-        cmake ..
+        cd cpp_cruise_control
+        rm -rf build && mkdir build && cd build
+        conan install .. --build=missing
+        cmake .. -DCMAKE_BUILD_TYPE=Release
         ../build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw-output make
-
 
     - name: SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@v5.0.0
@@ -69,16 +59,16 @@ jobs:
         args: >
           -Dsonar.projectKey=krishnasai-devops_autoware-platform-ci-cd
           -Dsonar.organization=krishnasai-devops
-          -Dsonar.sources=.
-          -Dsonar.cfamily.build-wrapper-output=bw-output
+          -Dsonar.sources=cpp_cruise_control
+          -Dsonar.cfamily.build-wrapper-output=cpp_cruise_control/build/bw-output
           -Dsonar.branch.name=${{ github.ref_name }}
       env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} 
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     - name: Snyk Open Source Scan
-      uses: snyk/actions/node@master
+      uses: snyk/actions/cli@master
       with:
-        args: test
+        command: test
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
@@ -94,11 +84,10 @@ jobs:
         docker tag cpp-service ${{ secrets.DOCKER_REPO_URL }}/cpp-service:1.0
         docker push ${{ secrets.DOCKER_REPO_URL }}/cpp-service:1.0
 
-    - name: JIRA Transition Update
+    - name: JIRA Issue Transition Update
       run: |
         curl -u ${{ secrets.JIRA_USER }}:${{ secrets.JIRA_TOKEN }} \
              -X POST \
              -H "Content-Type: application/json" \
              --data '{"transition":{"id":"31"}}' \
              ${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/PROJ-123/transitions
-
